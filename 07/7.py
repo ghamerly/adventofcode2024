@@ -3,76 +3,54 @@
 # https://adventofcode.com/2024/day/7 - "Bridge Repair"
 # Author: Greg Hamerly
 
-import itertools
 import sys
-
-def part1(data):
-    answer = 0
-
-    for eqn in data:
-        target, *terms = eqn
-
-        p = len(terms) - 1
-        for x in range(2 ** p):
-            r = terms[0]
-            for i, t in enumerate(terms[1:]):
-                if x & (1 << i):
-                    r *= t
-                else:
-                    r += t
-
-            if r == target:
-                answer += target
-                break
-
-    return answer
 
 def all_combos(ops, n, ans=None):
     if ans is None:
-        ans = []
+        ans = [None] * n
 
     if n == 0:
         yield ans
-        return
+    else:
+        for o in ops:
+            ans[n-1] = o
+            yield from all_combos(ops, n - 1, ans)
 
-    ans.append(None)
-    for o in ops:
-        ans[-1] = o
-        yield from all_combos(ops, n - 1, ans)
-    ans.pop()
-    
+def possible(eqn, possible_operators):
+    target, *terms = eqn
 
-def part2(data):
-    answer = 0
+    for ops in all_combos(possible_operators, len(terms) - 1):
+        r = terms[0]
+        for op, t in zip(ops, terms[1:]):
+            if op == '+':
+                r += t
+            elif op == '*':
+                r *= t
+            elif op == '|':
+                r = int(str(r) + str(t))
+            else:
+                assert False, f'what is operator {op}?'
 
-    for eqn in data:
-        target, *terms = eqn
-
-        p = len(terms) - 1
-        found = False
-        for ops in all_combos('+*|', p):
-            #print('***', ops)
-            r = terms[0]
-            for op, t in zip(ops, terms[1:]):
-                if op == '+':
-                    r += t
-                elif op == '*':
-                    r *= t
-                else:
-                    r = int(str(r) + str(t))
-
-                if r > target:
-                    #print('breaking early')
-                    break
-
-            #print(p, eqn, ops, r)
-            if r == target:
-                #print(target, 'found it!')
-                answer += target
+            if r > target:
                 break
 
+        if r == target:
+            return True
+
+    return False
+
+def solve(data, possible_operators):
+    answer = 0
+    for eqn in data:
+        if possible(eqn, possible_operators):
+            answer += eqn[0]
     return answer
 
+def part1(data):
+    return solve(data, '*+')
+
+def part2(data):
+    return solve(data, '*+|')
 
 def mogrify(line):
     return list(map(int, map(lambda s: s.strip(':'), line.split())))
