@@ -5,53 +5,29 @@
 
 import sys
 
-def part1(data):
-    trailheads = {}
+def solve(data):
+    # BFS starting from each trailhead, keeping track of the trailheads and
+    # number of paths as we go.
+    TRAILHEAD = 0
+    DESTINATION = 9
+    trailheads = []
     for r, row in enumerate(data):
-        for c, col in enumerate(row):
-            if col == 0:
-                trailheads[(r, c)] = set()
+        trailheads.extend([(r, c) for c, col in enumerate(row) if col == TRAILHEAD])
 
-    answer = {t: set() for t in trailheads}
-    queue = {t: {t} for t in trailheads}
-    while queue:
-        next_queue = {}
-        for r, c in queue:
-            h = data[r][c]
-            if h == 9:
-                for th in queue[(r, c)]:
-                    answer[th].add((r, c))
-            for rr, cc in [(r-1, c), (r+1, c), (r, c-1), (r, c+1)]:
-                if 0 <= rr < len(data) and 0 <= cc < len(data[rr]):
-                    h2 = data[rr][cc]
-                    if h + 1 == h2:
-                        if (rr, cc) not in next_queue:
-                            next_queue[(rr, cc)] = set()
-                        next_queue[(rr, cc)].update(queue[(r, c)])
-        queue = next_queue
-
-    return sum(map(len, answer.values()))
-
-def part2(data):
-    trailheads = {}
-    for r, row in enumerate(data):
-        for c, col in enumerate(row):
-            if col == 0:
-                trailheads[(r, c)] = set()
-
-    answer = {t: 0 for t in trailheads}
+    # answer keeps for each trailhead a dictionary of {destination: path_count}
+    answer = {t: {} for t in trailheads}
     queue = {t: {t: 1} for t in trailheads}
     while queue:
         next_queue = {}
         for r, c in queue:
-            h = data[r][c]
-            if h == 9:
+            if data[r][c] == DESTINATION:
                 for th, count in queue[(r, c)].items():
-                    answer[th] += count
+                    if (r, c) not in answer[th]:
+                        answer[th][(r, c)] = 0
+                    answer[th][(r, c)] += count
             for rr, cc in [(r-1, c), (r+1, c), (r, c-1), (r, c+1)]:
                 if 0 <= rr < len(data) and 0 <= cc < len(data[rr]):
-                    h2 = data[rr][cc]
-                    if h + 1 == h2:
+                    if data[r][c] + 1 == data[rr][cc]:
                         if (rr, cc) not in next_queue:
                             next_queue[(rr, cc)] = {}
                         for th, count in queue[(r, c)].items():
@@ -60,7 +36,15 @@ def part2(data):
                             next_queue[(rr, cc)][th] += count
         queue = next_queue
 
-    return sum(answer.values())
+    return answer
+
+def part1(data):
+    answer = solve(data)
+    return sum(map(len, answer.values()))
+
+def part2(data):
+    answer = solve(data)
+    return sum([sum(dests.values()) for th, dests in answer.items()])
 
 def mogrify(line):
     return list(map(int, line))
