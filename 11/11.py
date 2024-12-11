@@ -6,6 +6,12 @@
 import sys
 
 def solve(data, iterations):
+    # one interesting feature of this problem is that after some number of
+    # iterations, the set of keys in the frontier stops changing (only the
+    # counts are changing). For the input I was given, there are 3811 keys. So
+    # at that point, you could use a "repeated squaring" algorithm to fast
+    # forward through the process of iteration.
+
     frontier = {x: data[0].count(x) for x in data[0]}
     for _ in range(iterations):
         next_frontier = {}
@@ -22,6 +28,10 @@ def solve(data, iterations):
                 next_frontier[z] = next_frontier.get(z, 0) + count
 
         frontier = next_frontier
+
+    # examine the data a bit
+    #print(sorted(frontier.items(), key=lambda x: -x[1]))
+    #print(len(frontier))
 
     return sum(frontier.values())
 
